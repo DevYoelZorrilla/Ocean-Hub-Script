@@ -1,25 +1,161 @@
 -- ============================================
---  SISTEMA DE CLAVE (OCEAN EDITION) - V5.3
---  🌊 CON VALIDACIÓN POR SERVIDOR
+--  🌊 OCEAN HUB V6.0 - EDICIÓN OCEÁNICA
+--  "Donde el script se encuentra con el mar"
 -- ============================================
 
--- Servicios necesarios para la interfaz
+-- Servicios necesarios
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 -- ===== CONFIGURACIÓN =====
--- ⚠️ CAMBIA ESTO POR LA URL DE TU WORKER
 local API_URL = "https://raspy-thunder-db2d.zorrillahipolito2.workers.dev"
 local KEY_LINK = "https://lootdest.org/s?LaJIVeSQ"
 local DISCORD_LINK = "https://discord.gg/tu-invitacion"
 -- =========================
 
 local keyVerified = false
+local rangoActual = "Tripulante"
+local diasRestantes = 0
 
 -- ==================================================
--- [ FUNCIÓN MEJORADA PARA COPIAR AL PORTAPAPELES ]
+-- [ 🎵 SONIDOS OCEÁNICOS ]
 -- ==================================================
+
+local function PlayOceanSound(soundId, volume)
+    local sound = Instance.new("Sound")
+    sound.SoundId = soundId
+    sound.Volume = volume or 0.3
+    sound.Parent = game:GetService("CoreGui")
+    sound:Play()
+    task.wait(sound.TimeLength or 0.5)
+    sound:Destroy()
+end
+
+local function PlayWaveSound()
+    PlayOceanSound("rbxassetid://1837983320", 0.2) -- Sonido de olas
+end
+
+local function PlayTreasureSound()
+    PlayOceanSound("rbxassetid://9120380509", 0.3) -- Sonido de tesoro
+end
+
+local function PlayStormSound()
+    PlayOceanSound("rbxassetid://1837941302", 0.3) -- Sonido de tormenta
+end
+
+-- ==================================================
+-- [ 🌅 FONDO ANIMADO DE OCÉANO ]
+-- ==================================================
+
+local function CreateOceanBackground(parent)
+    local background = Instance.new("Frame")
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.BackgroundColor3 = Color3.fromRGB(135, 206, 235) -- Cielo
+    background.BackgroundTransparency = 1
+    background.Parent = parent
+    
+    -- Cielo
+    local sky = Instance.new("Frame")
+    sky.Size = UDim2.new(1, 0, 0.6, 0)
+    sky.BackgroundColor3 = Color3.fromRGB(135, 206, 235)
+    sky.BackgroundTransparency = 0
+    sky.Parent = background
+    
+    -- Sol
+    local sun = Instance.new("ImageLabel")
+    sun.Size = UDim2.new(0, 60, 0, 60)
+    sun.Position = UDim2.new(0.85, 0, 0.05, 0)
+    sun.BackgroundTransparency = 1
+    sun.Image = "rbxassetid://1901967100"
+    sun.Parent = background
+    
+    -- Nubes
+    local clouds = {}
+    for i = 1, 4 do
+        local cloud = Instance.new("ImageLabel")
+        cloud.Size = UDim2.new(0, 80 + math.random(30), 0, 30 + math.random(20))
+        cloud.Position = UDim2.new(math.random() * 0.8, 0, 0.05 + math.random() * 0.15, 0)
+        cloud.BackgroundTransparency = 1
+        cloud.Image = "rbxassetid://1901967172"
+        cloud.ImageTransparency = 0.4
+        cloud.Parent = background
+        table.insert(clouds, cloud)
+        
+        -- Animación de nubes
+        task.spawn(function()
+            while background.Parent do
+                local x = cloud.Position.X.Scale + 0.001
+                if x > 1.1 then x = -0.1 end
+                cloud.Position = UDim2.new(x, 0, cloud.Position.Y.Scale, 0)
+                task.wait(0.02)
+            end
+        end)
+    end
+    
+    -- Olas (3 capas)
+    local waves = {}
+    for i = 1, 3 do
+        local wave = Instance.new("Frame")
+        wave.Size = UDim2.new(1, 0, 0, 15 + i * 8)
+        wave.Position = UDim2.new(0, 0, 0.6 + i * 0.08, 0)
+        wave.BackgroundColor3 = Color3.fromRGB(0, 100 + i * 30, 180 + i * 20)
+        wave.BackgroundTransparency = 0.2 + i * 0.1
+        wave.Parent = background
+        
+        local waveCorner = Instance.new("UICorner")
+        waveCorner.CornerRadius = UDim.new(1, 0)
+        waveCorner.Parent = wave
+        
+        table.insert(waves, wave)
+        
+        -- Animación de olas
+        task.spawn(function()
+            local offset = i * 10
+            while background.Parent do
+                offset = (offset + 0.5) % 100
+                local scale = 1 + math.sin(offset * 0.1 + i) * 0.02
+                wave.Size = UDim2.new(1, 0, 0, 15 + i * 8)
+                wave.Position = UDim2.new(0, 0, 0.6 + i * 0.08 + math.sin(offset * 0.05 + i * 1.5) * 0.015, 0)
+                task.wait(0.05)
+            end
+        end)
+    end
+    
+    -- Burbujas decorativas (más grandes y lentas)
+    for i = 1, 10 do
+        local bubble = Instance.new("Frame")
+        bubble.Size = UDim2.new(0, math.random(6, 16), 0, math.random(6, 16))
+        bubble.Position = UDim2.new(math.random(), 0, 0.5 + math.random() * 0.4, 0)
+        bubble.BackgroundColor3 = Color3.fromRGB(200, 230, 255)
+        bubble.BackgroundTransparency = 0.5
+        bubble.BorderSizePixel = 0
+        bubble.Parent = background
+        
+        local bubbleCorner = Instance.new("UICorner")
+        bubbleCorner.CornerRadius = UDim.new(1, 0)
+        bubbleCorner.Parent = bubble
+        
+        task.spawn(function()
+            local speed = 0.1 + math.random() * 0.2
+            while background.Parent do
+                bubble.Position = UDim2.new(bubble.Position.X.Scale + math.sin(tick() * 0.5 + i) * 0.001, 0, bubble.Position.Y.Scale - 0.001 * speed, 0)
+                if bubble.Position.Y.Scale < 0.4 then
+                    bubble.Position = UDim2.new(math.random(), 0, 0.9 + math.random() * 0.1, 0)
+                end
+                task.wait(0.03)
+            end
+        end)
+    end
+    
+    return background
+end
+
+-- ==================================================
+-- [ 🔑 SISTEMA DE CLAVE MEJORADO ]
+-- ==================================================
+
 local function copyToClipboard(text)
     if setclipboard then
         setclipboard(text)
@@ -54,33 +190,39 @@ local function copyToClipboard(text)
 end
 
 -- ==================================================
--- [ ANIMACIÓN DE CARGA ]
+-- [ ANIMACIÓN DE CARGA OCEÁNICA ]
 -- ==================================================
+
 local function ShowLoadingScreen()
     local sgLoading = Instance.new("ScreenGui")
     sgLoading.Name = "OceanLoading"
     sgLoading.Parent = (gethui and gethui()) or game:GetService("CoreGui")
     sgLoading.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+    -- Fondo de océano durante la carga
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 1, 0)
     frame.BackgroundColor3 = Color3.fromRGB(5, 20, 30)
     frame.BackgroundTransparency = 0
     frame.Parent = sgLoading
+    
+    -- Olas de carga
+    CreateOceanBackground(frame)
 
     local loadingText = Instance.new("TextLabel")
-    loadingText.Size = UDim2.new(0, 300, 0, 50)
-    loadingText.Position = UDim2.new(0.5, -150, 0.5, -25)
+    loadingText.Size = UDim2.new(0, 350, 0, 60)
+    loadingText.Position = UDim2.new(0.5, -175, 0.5, -30)
     loadingText.BackgroundTransparency = 1
     loadingText.Text = "🌊 Cargando océano..."
     loadingText.TextColor3 = Color3.fromRGB(0, 220, 255)
     loadingText.Font = Enum.Font.GothamBold
-    loadingText.TextSize = 24
+    loadingText.TextSize = 28
+    loadingText.TextScaled = true
     loadingText.Parent = frame
 
     local spinner = Instance.new("Frame")
-    spinner.Size = UDim2.new(0, 40, 0, 40)
-    spinner.Position = UDim2.new(0.5, -20, 0.5, -80)
+    spinner.Size = UDim2.new(0, 50, 0, 50)
+    spinner.Position = UDim2.new(0.5, -25, 0.5, -90)
     spinner.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
     spinner.BackgroundTransparency = 0.3
     spinner.Parent = frame
@@ -98,14 +240,20 @@ local function ShowLoadingScreen()
         end
     end)
 
+    -- Sonido de olas al cargar
+    task.spawn(function()
+        PlayWaveSound()
+    end)
+
     return sgLoading, frame, loadingText
 end
 
 local loadingScreen, loadFrame, loadText = ShowLoadingScreen()
 
 -- ==================================================
--- [ CREACIÓN DE LA INTERFAZ DE CLAVE ]
+-- [ CREACIÓN DE LA INTERFAZ DE CLAVE OCEÁNICA ]
 -- ==================================================
+
 local sg = Instance.new("ScreenGui")
 sg.Name = "OceanPrestige"
 sg.Parent = (gethui and gethui()) or game:GetService("CoreGui")
@@ -113,107 +261,89 @@ sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Enabled = false
 
 local KeyWindow = Instance.new("Frame")
-KeyWindow.Size = UDim2.new(0, 420, 0, 370)
-KeyWindow.Position = UDim2.new(0.5, -210, 0.5, -185)
+KeyWindow.Size = UDim2.new(0, 480, 0, 420)
+KeyWindow.Position = UDim2.new(0.5, -240, 0.5, -210)
 KeyWindow.BackgroundColor3 = Color3.fromRGB(5, 20, 30)
+KeyWindow.BackgroundTransparency = 0.15
 KeyWindow.BorderSizePixel = 0
 KeyWindow.Active = true
 KeyWindow.Draggable = true
 KeyWindow.Parent = sg
 
 local KeyCorner = Instance.new("UICorner")
-KeyCorner.CornerRadius = UDim.new(0, 20)
+KeyCorner.CornerRadius = UDim.new(0, 25)
 KeyCorner.Parent = KeyWindow
 
--- Fondo con partículas (burbujas)
-local function CreateBubbles()
-    for i = 1, 15 do
-        local bubble = Instance.new("Frame")
-        bubble.Size = UDim2.new(0, math.random(4, 12), 0, math.random(4, 12))
-        bubble.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        bubble.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-        bubble.BackgroundTransparency = 0.5
-        bubble.BorderSizePixel = 0
-        bubble.Parent = KeyWindow
-
-        local bubbleCorner = Instance.new("UICorner")
-        bubbleCorner.CornerRadius = UDim.new(1, 0)
-        bubbleCorner.Parent = bubble
-
-        task.spawn(function()
-            local speed = 0.2 + math.random() * 0.3
-            while bubble.Parent do
-                bubble.Position = UDim2.new(bubble.Position.X.Scale, 0, bubble.Position.Y.Scale - 0.001 * speed, 0)
-                if bubble.Position.Y.Scale < -0.1 then
-                    bubble.Position = UDim2.new(math.random(), 0, 1.1, 0)
-                end
-                task.wait(0.02)
-            end
-        end)
-    end
-end
-CreateBubbles()
+-- 🌅 Fondo de océano animado en la ventana
+local oceanBg = CreateOceanBackground(KeyWindow)
+oceanBg.BackgroundTransparency = 0.9
 
 -- Efecto de brillo en el borde
 local KeyGlow = Instance.new("Frame")
-KeyGlow.Size = UDim2.new(1, 4, 1, 4)
-KeyGlow.Position = UDim2.new(0, -2, 0, -2)
+KeyGlow.Size = UDim2.new(1, 8, 1, 8)
+KeyGlow.Position = UDim2.new(0, -4, 0, -4)
 KeyGlow.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-KeyGlow.BackgroundTransparency = 0.85
+KeyGlow.BackgroundTransparency = 0.8
 KeyGlow.BorderSizePixel = 0
 KeyGlow.Parent = KeyWindow
 
 local KeyGlowCorner = Instance.new("UICorner")
-KeyGlowCorner.CornerRadius = UDim.new(0, 22)
+KeyGlowCorner.CornerRadius = UDim.new(0, 28)
 KeyGlowCorner.Parent = KeyGlow
 
 -- Título animado (efecto olas)
 local KeyTitle = Instance.new("TextLabel")
-KeyTitle.Size = UDim2.new(1, 0, 0, 60)
+KeyTitle.Size = UDim2.new(1, 0, 0, 70)
 KeyTitle.Position = UDim2.new(0, 0, 0, 0)
 KeyTitle.BackgroundColor3 = Color3.fromRGB(10, 30, 45)
+KeyTitle.BackgroundTransparency = 0.3
 KeyTitle.BorderSizePixel = 0
-KeyTitle.Text = "🐚 MM2 OCEAN V5 🌊"
+KeyTitle.Text = "🐚 MM2 OCEAN V6 🌊"
 KeyTitle.TextColor3 = Color3.fromRGB(0, 220, 255)
 KeyTitle.Font = Enum.Font.GothamBold
-KeyTitle.TextSize = 20
+KeyTitle.TextSize = 24
+KeyTitle.TextScaled = true
 KeyTitle.Parent = KeyWindow
 
 local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 20)
+TitleCorner.CornerRadius = UDim.new(0, 25)
 TitleCorner.Parent = KeyTitle
 
+-- Animación de olas en el título
 task.spawn(function()
     local hue = 0
     while KeyTitle.Parent do
-        hue = (hue + 0.5) % 360
+        hue = (hue + 0.3) % 360
         local color = Color3.fromHSV((hue / 360) * 0.5 + 0.5, 1, 0.8)
         KeyTitle.TextColor3 = color
         task.wait(0.05)
     end
 end)
 
+-- Subtítulo con rango (si hay)
 local KeySub = Instance.new("TextLabel")
-KeySub.Size = UDim2.new(1, 0, 0, 25)
-KeySub.Position = UDim2.new(0, 0, 0, 55)
+KeySub.Size = UDim2.new(1, 0, 0, 30)
+KeySub.Position = UDim2.new(0, 0, 0, 65)
 KeySub.BackgroundTransparency = 1
 KeySub.Text = "🌊 ENTER LICENSE KEY"
 KeySub.TextColor3 = Color3.fromRGB(150, 200, 255)
 KeySub.Font = Enum.Font.Gotham
-KeySub.TextSize = 12
+KeySub.TextSize = 14
 KeySub.Parent = KeyWindow
 
+-- Campo de texto para la clave
 local KeyBox = Instance.new("TextBox")
-KeyBox.Size = UDim2.new(0.8, 0, 0, 50)
-KeyBox.Position = UDim2.new(0.5, -160, 0, 100)
+KeyBox.Size = UDim2.new(0.8, 0, 0, 55)
+KeyBox.Position = UDim2.new(0.1, 0, 0, 110)
 KeyBox.BackgroundColor3 = Color3.fromRGB(15, 40, 55)
+KeyBox.BackgroundTransparency = 0.3
 KeyBox.BorderSizePixel = 0
 KeyBox.PlaceholderText = "🔑 XXXXXXXXXX"
 KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 180, 210)
 KeyBox.Text = ""
 KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 KeyBox.Font = Enum.Font.GothamBold
-KeyBox.TextSize = 16
+KeyBox.TextSize = 18
 KeyBox.Parent = KeyWindow
 
 local KeyBoxCorner = Instance.new("UICorner")
@@ -222,22 +352,23 @@ KeyBoxCorner.Parent = KeyBox
 
 local KeyBoxStroke = Instance.new("UIStroke")
 KeyBoxStroke.Color = Color3.fromRGB(0, 200, 255)
-KeyBoxStroke.Thickness = 1.5
-KeyBoxStroke.Transparency = 0.5
+KeyBoxStroke.Thickness = 2
+KeyBoxStroke.Transparency = 0.4
 KeyBoxStroke.Parent = KeyBox
 
 -- ==================================================
--- [ BOTONES CON EFECTO DE BRILLO ]
+-- [ BOTONES CON EFECTO OCEÁNICO ]
 -- ==================================================
 
+-- Botón VERIFY
 local SubmitBtn = Instance.new("TextButton")
-SubmitBtn.Size = UDim2.new(0.8, 0, 0, 45)
-SubmitBtn.Position = UDim2.new(0.1, 0, 0, 175)
+SubmitBtn.Size = UDim2.new(0.8, 0, 0, 50)
+SubmitBtn.Position = UDim2.new(0.1, 0, 0, 185)
 SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
 SubmitBtn.Text = "🐠 VERIFY"
 SubmitBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 SubmitBtn.Font = Enum.Font.GothamBold
-SubmitBtn.TextSize = 16
+SubmitBtn.TextSize = 18
 SubmitBtn.BorderSizePixel = 0
 SubmitBtn.Parent = KeyWindow
 
@@ -245,6 +376,7 @@ local SubmitCorner = Instance.new("UICorner")
 SubmitCorner.CornerRadius = UDim.new(0, 12)
 SubmitCorner.Parent = SubmitBtn
 
+-- Efecto de brillo en el botón
 task.spawn(function()
     while SubmitBtn.Parent do
         for i = 0.5, 1, 0.05 do
@@ -258,9 +390,10 @@ task.spawn(function()
     end
 end)
 
+-- Botón GET KEY
 local GetKeyBtn = Instance.new("TextButton")
-GetKeyBtn.Size = UDim2.new(0.35, 0, 0, 40)
-GetKeyBtn.Position = UDim2.new(0.08, 0, 0, 235)
+GetKeyBtn.Size = UDim2.new(0.35, 0, 0, 45)
+GetKeyBtn.Position = UDim2.new(0.08, 0, 0, 255)
 GetKeyBtn.BackgroundColor3 = Color3.fromRGB(20, 50, 70)
 GetKeyBtn.Text = "🦈 GET KEY"
 GetKeyBtn.TextColor3 = Color3.fromRGB(0, 200, 255)
@@ -273,9 +406,10 @@ local GetKeyCorner = Instance.new("UICorner")
 GetKeyCorner.CornerRadius = UDim.new(0, 12)
 GetKeyCorner.Parent = GetKeyBtn
 
+-- Botón DISCORD
 local DiscordBtn = Instance.new("TextButton")
-DiscordBtn.Size = UDim2.new(0.35, 0, 0, 40)
-DiscordBtn.Position = UDim2.new(0.57, 0, 0, 235)
+DiscordBtn.Size = UDim2.new(0.35, 0, 0, 45)
+DiscordBtn.Position = UDim2.new(0.57, 0, 0, 255)
 DiscordBtn.BackgroundColor3 = Color3.fromRGB(20, 50, 70)
 DiscordBtn.Text = "💬 DISCORD"
 DiscordBtn.TextColor3 = Color3.fromRGB(0, 200, 255)
@@ -288,19 +422,22 @@ local DiscordCorner = Instance.new("UICorner")
 DiscordCorner.CornerRadius = UDim.new(0, 12)
 DiscordCorner.Parent = DiscordBtn
 
+-- Mensaje de estado
 local KeyMessage = Instance.new("TextLabel")
-KeyMessage.Size = UDim2.new(1, 0, 0, 25)
-KeyMessage.Position = UDim2.new(0, 0, 0, 285)
+KeyMessage.Size = UDim2.new(1, 0, 0, 30)
+KeyMessage.Position = UDim2.new(0, 0, 0, 315)
 KeyMessage.BackgroundTransparency = 1
 KeyMessage.Text = ""
-KeyMessage.TextColor3 = Color3.fromRGB(255, 100, 100)
+KeyMessage.TextColor3 = Color3.fromRGB(255, 255, 255)
 KeyMessage.Font = Enum.Font.Gotham
-KeyMessage.TextSize = 11
+KeyMessage.TextSize = 13
+KeyMessage.TextScaled = true
 KeyMessage.Parent = KeyWindow
 
+-- Notificación de "COPIED"
 local CopyNotification = Instance.new("TextLabel")
 CopyNotification.Size = UDim2.new(0, 160, 0, 35)
-CopyNotification.Position = UDim2.new(0.5, -80, 1, -60)
+CopyNotification.Position = UDim2.new(0.5, -80, 1, -55)
 CopyNotification.BackgroundColor3 = Color3.fromRGB(20, 50, 70)
 CopyNotification.Text = "📋 COPIED!"
 CopyNotification.TextColor3 = Color3.fromRGB(0, 200, 255)
@@ -315,12 +452,13 @@ CopyCorner.CornerRadius = UDim.new(0, 8)
 CopyCorner.Parent = CopyNotification
 
 -- ==================================================
--- [ FUNCIONES DE NOTIFICACIÓN ]
+-- [ FUNCIONES DE NOTIFICACIÓN OCEÁNICA ]
 -- ==================================================
+
 local function showNotification(text, isError)
     KeyMessage.Text = text
     KeyMessage.TextColor3 = (isError and Color3.fromRGB(255, 100, 100)) or Color3.fromRGB(100, 255, 100)
-    task.wait(2)
+    task.wait(2.5)
     KeyMessage.Text = ""
 end
 
@@ -335,31 +473,48 @@ local function showCopyNotification()
 end
 
 -- ==================================================
--- [ EVENTOS DE BOTONES ]
+-- [ 📊 PANEL DE RANGO Y ESTADÍSTICAS ]
 -- ==================================================
 
-GetKeyBtn.MouseButton1Click:Connect(function()
-    local success = copyToClipboard(KEY_LINK)
-    if success then
-        showCopyNotification()
-        showNotification("📋 KEY LINK COPIED!", false)
+local function ShowRangoInfo(rango, dias)
+    local rangoEmoji = "🐠"
+    local rangoColor = Color3.fromRGB(100, 200, 100)
+    local mensajeRango = ""
+    
+    if rango:find("Aprendiz") then
+        rangoEmoji = "🐠"
+        rangoColor = Color3.fromRGB(100, 200, 100)
+        mensajeRango = "¡Bienvenido a bordo, aprendiz!"
+    elseif rango:find("Explorador") then
+        rangoEmoji = "🧪"
+        rangoColor = Color3.fromRGB(255, 200, 50)
+        mensajeRango = "Explorando los mares..."
+    elseif rango:find("Tiburón") then
+        rangoEmoji = "🦈"
+        rangoColor = Color3.fromRGB(200, 50, 50)
+        mensajeRango = "¡Un depredador del océano!"
+    elseif rango:find("Ballena") then
+        rangoEmoji = "🐋"
+        rangoColor = Color3.fromRGB(80, 150, 255)
+        mensajeRango = "¡Una ballena! El océano es tuyo."
+    elseif rango:find("Capitán") then
+        rangoEmoji = "👑"
+        rangoColor = Color3.fromRGB(255, 215, 0)
+        mensajeRango = "¡Capitán del Océano! El mar te obedece."
     else
-        showNotification("❌ Error al copiar. Intenta manualmente.", true)
+        rangoEmoji = "🌊"
+        rangoColor = Color3.fromRGB(0, 200, 255)
+        mensajeRango = "Tripulante del océano."
     end
-end)
-
-DiscordBtn.MouseButton1Click:Connect(function()
-    local success = copyToClipboard(DISCORD_LINK)
-    if success then
-        showCopyNotification()
-        showNotification("💬 DISCORD LINK COPIED!", false)
-    else
-        showNotification("❌ Error al copiar enlace de Discord.", true)
-    end
-end)
+    
+    local diasMsg = dias == "∞" and "♾️ Permanente" or "⏳ " .. dias .. " días restantes"
+    
+    KeySub.Text = rangoEmoji .. " " .. rango .. " | " .. diasMsg
+    KeySub.TextColor3 = rangoColor
+end
 
 -- ==================================================
--- [ 🚀 NUEVA VERIFICACIÓN POR SERVIDOR (OP) ]
+-- [ 🚀 VERIFICACIÓN POR SERVIDOR MEJORADA ]
 -- ==================================================
 
 local StartOcean
@@ -367,12 +522,13 @@ local StartOcean
 local function verifyKey()
     local enteredKey = KeyBox.Text
     if enteredKey == "" then
-        showNotification("✗ Please enter a key.", true)
+        showNotification("🌊 Por favor, ingresa una clave.", true)
+        PlayStormSound()
         return
     end
 
     SubmitBtn.Visible = false
-    SubmitBtn.Text = "⏳ Verifying..."
+    SubmitBtn.Text = "⏳ Verificando..."
 
     task.spawn(function()
         local success, response = pcall(function()
@@ -387,26 +543,44 @@ local function verifyKey()
             
             if data and data.valid then
                 -- ✅ Clave válida
-                local msg = "✅ " .. (data.message or "Clave válida")
-                local typeMsg = "🔑 Tipo: " .. (data.type or "Desconocido")
-                local expiresMsg = "📅 Expira: " .. (data.expires or "N/A")
-                showNotification(msg .. " | " .. typeMsg .. " | " .. expiresMsg, false)
+                rangoActual = data.rango or "Tripulante"
+                diasRestantes = data.dias_restantes or 0
+                
+                local mensajeFinal = data.message or "🌊 ¡Clave válida! Bienvenido al océano."
+                ShowRangoInfo(rangoActual, diasRestantes)
+                showNotification(mensajeFinal, false)
+                
+                -- Sonido de tesoro
+                PlayTreasureSound()
                 
                 keyVerified = true
-                TweenService:Create(KeyWindow, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-                TweenService:Create(KeyWindow, TweenInfo.new(0.2), {Size = UDim2.new(0, 0, 0, 0)}):Play()
-                task.wait(0.2)
+                
+                -- Efecto de marea (desvanecimiento con animación)
+                TweenService:Create(KeyWindow, TweenInfo.new(0.8, Enum.EasingStyle.Cubic, Enum.EasingDirection.InOut), {
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(0, 400, 0, 300)
+                }):Play()
+                
+                task.wait(0.8)
                 KeyWindow.Visible = false
-                if StartOcean then StartOcean() else task.wait(0.1); StartOcean() end
+                
+                if StartOcean then 
+                    StartOcean() 
+                else 
+                    task.wait(0.1) 
+                    StartOcean() 
+                end
             else
                 -- ❌ Clave inválida o expirada
-                local errorMsg = data and data.message or "INVALID KEY! 🌊 Please check again."
+                local errorMsg = data and data.message or "🌊 Clave inválida."
                 showNotification("✗ " .. errorMsg, true)
+                PlayStormSound()
                 KeyBox.Text = ""
             end
         else
             -- ⚠️ Error de conexión
-            showNotification("⚠️ ERROR: Could not reach key server. Check your internet.", true)
+            showNotification("⚠️ Error de conexión. Revisa tu internet.", true)
+            PlayStormSound()
             KeyBox.Text = ""
         end
     end)
@@ -420,6 +594,34 @@ KeyBox.FocusLost:Connect(function(enterPressed)
 end)
 
 -- ==================================================
+-- [ EVENTOS DE BOTONES ]
+-- ==================================================
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+    local success = copyToClipboard(KEY_LINK)
+    if success then
+        showCopyNotification()
+        showNotification("📋 Enlace copiado!", false)
+        PlayTreasureSound()
+    else
+        showNotification("❌ Error al copiar.", true)
+        PlayStormSound()
+    end
+end)
+
+DiscordBtn.MouseButton1Click:Connect(function()
+    local success = copyToClipboard(DISCORD_LINK)
+    if success then
+        showCopyNotification()
+        showNotification("💬 Enlace de Discord copiado!", false)
+        PlayTreasureSound()
+    else
+        showNotification("❌ Error al copiar.", true)
+        PlayStormSound()
+    end
+end)
+
+-- ==================================================
 -- [ FIN DE LA CARGA Y MOSTRAR INTERFAZ ]
 -- ==================================================
 task.wait(2)
@@ -427,9 +629,10 @@ if loadingScreen then
     loadingScreen:Destroy()
 end
 sg.Enabled = true
+PlayWaveSound() -- Sonido de olas al abrir
 
 -- ============================================
---   FIN DEL SISTEMA DE CLAVE (OCEAN EDITION)
+--   FIN DEL SISTEMA DE CLAVE (OCEAN EDITION V6)
 -- ============================================
 
 -- ============================================
