@@ -1,16 +1,15 @@
 -- ============================================
 --  SISTEMA DE CLAVE (OCEAN EDITION) - V5.3
---  🌊 ESTILO EXCLUSIVO OCEAN HUB + API
+--  🌊 CON VALIDACIÓN POR SERVIDOR
 -- ============================================
 
 -- Servicios necesarios para la interfaz
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
 
 -- ===== CONFIGURACIÓN =====
--- URL de tu API de Cloudflare Workers
+-- ⚠️ CAMBIA ESTO POR LA URL DE TU WORKER
 local API_URL = "https://raspy-thunder-db2d.zorrillahipolito2.workers.dev"
 local KEY_LINK = "https://lootdest.org/s?LaJIVeSQ"
 local DISCORD_LINK = "https://discord.gg/tu-invitacion"
@@ -360,13 +359,13 @@ DiscordBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ==================================================
--- [ NUEVO SISTEMA DE VERIFICACIÓN POR API ]
+-- [ 🚀 NUEVA VERIFICACIÓN POR SERVIDOR (OP) ]
 -- ==================================================
+
 local StartOcean
 
 local function verifyKey()
     local enteredKey = KeyBox.Text
-    
     if enteredKey == "" then
         showNotification("✗ Please enter a key.", true)
         return
@@ -384,7 +383,7 @@ local function verifyKey()
         SubmitBtn.Text = "🐠 VERIFY"
 
         if success and response then
-            local data = HttpService:JSONDecode(response)
+            local data = game:GetService("HttpService"):JSONDecode(response)
             
             if data and data.valid then
                 -- ✅ Clave válida
@@ -398,12 +397,7 @@ local function verifyKey()
                 TweenService:Create(KeyWindow, TweenInfo.new(0.2), {Size = UDim2.new(0, 0, 0, 0)}):Play()
                 task.wait(0.2)
                 KeyWindow.Visible = false
-                if StartOcean then
-                    StartOcean()
-                else
-                    task.wait(0.1)
-                    StartOcean()
-                end
+                if StartOcean then StartOcean() else task.wait(0.1); StartOcean() end
             else
                 -- ❌ Clave inválida o expirada
                 local errorMsg = data and data.message or "INVALID KEY! 🌊 Please check again."
@@ -445,7 +439,7 @@ sg.Enabled = true
 
 function StartOcean()
     -- ███████████████████████████████████████████████████████████████████████████
-    --  🐚  OCEAN · DIAMOND EDITION  ·  v25.2  🌊  (ESTILO EXCLUSIVO + API)
+    --  🐚  OCEAN · DIAMOND EDITION  ·  v25.3  🌊  (CON VALIDACIÓN POR SERVIDOR)
     --  ──────────────────────────────────────────────────────────────────────────
     --  "Código que fluye como el mar, sin perder ni una gota de poder."
     --  Desarrollado por:  Company Gamer Studios
@@ -459,7 +453,6 @@ function StartOcean()
     -- ================================================== ]]
 
     local Ocean = {
-        --  GEMAS DE ACTIVACIÓN
         SilentAim = false,
         UseCameraAimbot = false,
         TriggerBot = false,
@@ -473,7 +466,6 @@ function StartOcean()
         FlingSheriff = false,
         FlingMurder = false,
 
-        --  TECLADO SAGRADO
         CameraAimbotKey = Enum.KeyCode.X,
         SilentAimKey = Enum.KeyCode.B,
         TriggerKey = Enum.KeyCode.P,
@@ -494,7 +486,6 @@ function StartOcean()
         TpMurdererKey = Enum.KeyCode.F5,
         TpSheriffKey = Enum.KeyCode.F6,
 
-        --  Variables de Ajuste
         GrabHeight = 3,
         AuraRange = 25,
         AuraDelay = 0.035,
@@ -509,7 +500,6 @@ function StartOcean()
         EnableSounds = true,
     }
 
-    -- [ SERVICIOS DEL UNIVERSO ]
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
@@ -517,7 +507,6 @@ function StartOcean()
     local Workspace = game.Workspace
     local CoreGui = game:GetService("CoreGui")
 
-    -- [ VARIABLES DE LA MATRIX ]
     local LocalPlayer = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
 
@@ -527,12 +516,10 @@ function StartOcean()
     local SilentAimLoaded = false
     local LastShot = 0
 
-    -- Variables para conexiones de bucles
     local FakeLagConnection = nil
     local ServerLagConnection = nil
     local SpeedGlitchConnection = nil
 
-    -- Variables para optimización ESP
     local ESPLastUpdate = 0
     local ESPCache = {}
 
@@ -652,7 +639,7 @@ function StartOcean()
     end)
 
     -- ==================================================
-    -- [ SISTEMA DE ROLES - VERSIÓN MEJORADA ]
+    -- [ SISTEMA DE ROLES ]
     -- ==================================================
     local function GetRoleColor(player)
         if not player.Character then
@@ -950,7 +937,6 @@ function StartOcean()
     UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
 
-        -- Agarrar Pistola (Z)
         if input.KeyCode == Ocean.GrabKey then
             for _, v in pairs(Workspace:GetDescendants()) do
                 if v.Name == "GunDrop" and v:IsA("BasePart") then
@@ -966,7 +952,6 @@ function StartOcean()
             end
         end
 
-        -- Toggles con sonidos
         if input.KeyCode == Ocean.CameraAimbotKey then
             Ocean.UseCameraAimbot = not Ocean.UseCameraAimbot
             PlayToggleSound(Ocean.UseCameraAimbot)
@@ -1003,7 +988,6 @@ function StartOcean()
             ShowNotification("🔫 Auto Shoot", Ocean.AutoShoot and "✅ Activado 🌊" or "❌ Desactivado", Ocean.AutoShoot and "success" or "error")
         end
 
-        -- Map (U)
         if input.KeyCode == Ocean.MapKey then
             local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if not myRoot then
@@ -1029,7 +1013,6 @@ function StartOcean()
             ShowNotification("🌀 TELEPORT", "Teletransportado a " .. target.player.Name .. " 🌊", "success")
         end
 
-        -- Lobby (L)
         if input.KeyCode == Ocean.LobbyKey then
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if not root then
@@ -1084,7 +1067,6 @@ function StartOcean()
             end
         end
 
-        -- Admin Panel (J)
         if input.KeyCode == Ocean.AdminKey then
             local adminPanel = CoreGui:FindFirstChild("Ocean_AdminPanel")
             if adminPanel then
@@ -1095,17 +1077,14 @@ function StartOcean()
             end
         end
 
-        -- TP Murderer (F5)
         if input.KeyCode == Ocean.TpMurdererKey then
             TeleportToMurderer()
         end
 
-        -- TP Sheriff (F6)
         if input.KeyCode == Ocean.TpSheriffKey then
             TeleportToSheriff()
         end
 
-        -- Otros toggles
         if input.KeyCode == Ocean.FakeLagKey then ToggleFakeLag() end
         if input.KeyCode == Ocean.ServerLagKey then ToggleServerLag() end
         if input.KeyCode == Ocean.SpeedGlitchKey then ToggleSpeedGlitch() end
@@ -1685,7 +1664,6 @@ function StartOcean()
 
     SetupF2Teleport()
 
-    -- Actualización automática del panel cada 2 segundos
     task.spawn(function()
         while true do
             task.wait(2)
@@ -1695,9 +1673,8 @@ function StartOcean()
         end
     end)
 
-    -- [ FINALIZADO ]
     print("\27[32m==================================================\27[0m")
-    print("\27[36m   🐚 OCEAN STUDIOS - MEGA SCRIPT V25.2 🌊\27[0m")
+    print("\27[36m   🐚 OCEAN STUDIOS - MEGA SCRIPT V25.3 🌊\27[0m")
     print("\27[33m   F5 = TP Murderer | F6 = TP Sheriff\27[0m")
     print("\27[33m   U = MAPA | L = LOBBY | J = ADMIN PANEL | F2 = TP por nombre\27[0m")
     print("\27[32m==================================================\27[0m")
