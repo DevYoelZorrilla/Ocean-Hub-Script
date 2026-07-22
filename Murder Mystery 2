@@ -10,7 +10,7 @@ local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 
 -- ===== CONFIGURACIÓN =====
-local API_URL = "https://raspy-thunder-db2d.oceanhud.workers.dev/"
+local API_URL = "https://raspy-thunder-db2d.oceanhud.workers.dev"
 local KEY_LINK = "https://lootdest.org/s?LaJIVeSQ"
 local DISCORD_LINK = "https://discord.gg/tu-invitacion"
 -- =========================
